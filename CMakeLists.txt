@@ -5,9 +5,12 @@ project(${NAME})
 
 
 file(GLOB_RECURSE SCENE_SOURCES CONFIGURE_DEPENDS "src/scenes/**.cpp" "src/scenes/**.h")
+file(GLOB_RECURSE OBJECTS_SOURCES CONFIGURE_DEPENDS "src/objects/**.cpp" "src/objects/**.h")
+file(GLOB_RECURSE OBJECTS_SOURCES CONFIGURE_DEPENDS "src/colliders/**.cpp" "src/colliders/**.h")
 
-add_executable(${NAME} src/main.cpp ${SCENE_SOURCES})
+add_executable(${NAME} src/main.cpp ${SCENE_SOURCES} ${OBJECTS_SOURCES} ${COLLIDERS_OBJECTS})
 source_group("scenes" FILES ${SCENE_SOURCES})
+source_group("asdf" FILES ${OBJECTS_SOURCES})
 
 target_include_directories(${NAME} PRIVATE src)
 

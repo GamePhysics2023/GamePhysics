@@ -6,6 +6,6 @@ int main(int argc, char** argv) {
         new TestScene(),
     };
     Application app(scenes);
-    // app.showDemoWindow(true);
+    app.showDemoWindow(true);
     return app.run();
 }
