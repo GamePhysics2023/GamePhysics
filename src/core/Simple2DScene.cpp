@@ -1,7 +1,9 @@
 #include "Simple2DScene.h"
+#include <time.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include "core/Draw.h"
+#include "core/Random.h"
 #include "imgui.h"
 
 Simple2DScene::Simple2DScene()
@@ -12,7 +14,9 @@ Simple2DScene::Simple2DScene()
       cameraCenter(0, 0),
       orthographicSize(10),
       isCameraWindowVisible(true),
-      isMovingCamera(false) {}
+      isMovingCamera(false) {
+    Random::seed(time(nullptr));
+}
 
 Simple2DScene::~Simple2DScene() {}
 
