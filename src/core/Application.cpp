@@ -16,6 +16,7 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "core/Draw.h"
 #include "imgui.h"
+#include "Preferences.h"
 
 Application::Application(const std::vector<Scene*>& scenes)
     : scenes(scenes), clearColor(ImVec4(0.45f, 0.55f, 0.60f, 1.00f)) {
@@ -83,7 +84,6 @@ int Application::run() {
                               SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(isVsyncEnabled); // Enable vsync
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -116,10 +116,22 @@ int Application::run() {
     io.Fonts->AddFontFromFileTTF("assets/fonts/Roboto-Regular.ttf", 16.0f);
     // io.Fonts->AddFontFromFileTTF("assets/fonts/Roboto-Regular.ttf", 32.0f);
 
+    // Load Preferences
+    Preferences::load();
+    isStatsWindowVisible = Preferences::getBool("stats_window");
+    isSettingsWindowVisible = Preferences::getBool("settings_window");
+    isVsyncEnabled = Preferences::getBool("vsync");
+    isFramerateCapped = Preferences::getBool("framerate_capped");
+    framerateCap = Preferences::getFloat("framerate_cap", 60.0f);
+
+    SDL_GL_SetSwapInterval(isVsyncEnabled); // Enable vsync
+
     // Initialize first scene.
     currentScene->onEnable();
 
     mainLoop(io);
+
+    Preferences::save();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
@@ -248,9 +260,13 @@ void Application::menuBar() {
         if (ImGui::BeginMenu("Tools")) {
             if (ImGui::MenuItem("Stats", nullptr, isStatsWindowVisible)) {
                 isStatsWindowVisible = !isStatsWindowVisible;
+                Preferences::setBool("stats_window", isStatsWindowVisible);
+                Preferences::save();
             }
             if (ImGui::MenuItem("Settings", nullptr, isSettingsWindowVisible)) {
                 isSettingsWindowVisible = !isSettingsWindowVisible;
+                Preferences::setBool("settings_window", isSettingsWindowVisible);
+                Preferences::save();
             }
             ImGui::EndMenu();
         }
@@ -272,11 +288,19 @@ void Application::settingsWindow() {
         ImGui::Begin("Settings", &isSettingsWindowVisible);
         if (ImGui::Checkbox("Enable VSync", &isVsyncEnabled)) {
             SDL_GL_SetSwapInterval(isVsyncEnabled);
+            Preferences::setBool("vsync", isVsyncEnabled);
+            Preferences::save();
         }
 
-        ImGui::Checkbox("Cap Framerate", &isFramerateCapped);
+        if (ImGui::Checkbox("Cap Framerate", &isFramerateCapped)) {
+            Preferences::setBool("cap_framerate", isFramerateCapped);
+            Preferences::save();
+        }
         ImGui::SameLine();
-        ImGui::DragFloat("##Framerate Cap", &framerateCap, 1.f, 1, 0, "%.1f");
+        if (ImGui::DragFloat("##Framerate Cap", &framerateCap, 1.f, 1, 0,
+                             "%.1f")) {
+            Preferences::setFloat("framerate_cap", framerateCap);
+        }
         ImGui::End();
     }
 }
