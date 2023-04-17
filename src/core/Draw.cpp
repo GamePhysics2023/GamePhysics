@@ -10,8 +10,12 @@
     constexpr ImVec4(const glm::vec4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {} \
     operator glm::vec4() const { return glm::vec4(x, y, z, w); }
 
+#include <SDL_stdinc.h>
 #include <iostream>
+#include <vector>
 #include "imgui.h"
+#include "ImGuizmo.h"
+#include "Math.h"
 
 namespace Draw {
 
@@ -67,10 +71,25 @@ float transformLength(const glm::mat4& mat, float l) {
     return mat[0][0] * 0.5f * l * gContext.width;
 }
 
-void line(const glm::vec2& p1, const glm::vec2& p2) {
-    ImVec2 p1l = transformPoint(camMatrix, p1);
-    ImVec2 p2l = transformPoint(camMatrix, p2);
-    drawList->AddLine(p1l, p2l, gContext.color, gContext.thickness);
+void line(const glm::vec2& start, const glm::vec2& end) {
+    ImVec2 startl = transformPoint(camMatrix, start);
+    ImVec2 endl = transformPoint(camMatrix, end);
+    drawList->AddLine(startl, endl, gContext.color, gContext.thickness);
+}
+
+void arrow(const glm::vec2& start, const glm::vec2& end, float headThickness) {
+    glm::vec2 dir = end - start;
+    float headLength = gContext.thickness / camMatrix[0][0] * headThickness;
+    line(start, start + dir - 0.8f * headLength * glm::normalize(dir));
+    float headAngle = M_PI / 6;
+    float angle = glm::atan(dir.y, dir.x);
+    glm::vec2 points[3];
+    points[0] = end;
+    points[1] = glm::vec2(end.x - headLength * cosf(angle - headAngle),
+                          end.y - headLength * sinf(angle - headAngle));
+    points[2] = glm::vec2(end.x - headLength * cosf(angle + headAngle),
+                          end.y - headLength * sinf(angle + headAngle));
+    polygon(glm::mat4(1), points, 3, true);
 }
 
 void setupImGuiViewport() {
@@ -106,8 +125,120 @@ void aabb(const glm::vec2& min, const glm::vec2& max, bool filled) {
     if (filled) {
         drawList->AddRectFilled(minl, maxl, gContext.color, 0, 0);
     } else {
-        drawList->AddRect(minl, maxl, gContext.color, 0, 0, gContext.thickness);
+        drawList->AddRect(minl, maxl, gContext.color, 0, ImDrawFlags_None,
+                          gContext.thickness);
     }
+}
+
+void polygon(const glm::vec2 position,
+             const glm::vec2* points,
+             const int pointCount,
+             bool filled) {
+    std::vector<ImVec2> pointsl(pointCount);
+
+    for (int i = 0; i < pointCount; i++) {
+        pointsl[i] = transformPoint(camMatrix, points[i] + position);
+    }
+
+    if (filled) {
+        drawList->AddConvexPolyFilled(pointsl.data(), pointCount,
+                                      gContext.color);
+    } else {
+        drawList->AddPolyline(pointsl.data(), pointCount, gContext.color,
+                              ImDrawFlags_Closed, gContext.thickness);
+    }
+}
+
+void polygon(const glm::mat4& modelMatrix,
+             const glm::vec2* points,
+             int pointCount,
+             bool filled) {
+    glm::mat4 mvpMatrix = camMatrix * modelMatrix;
+    std::vector<ImVec2> pointsl(pointCount);
+
+    for (int i = 0; i < pointCount; i++) {
+        pointsl[i] = transformPoint(mvpMatrix, points[i]);
+    }
+
+    if (filled) {
+        drawList->AddConvexPolyFilled(pointsl.data(), pointCount,
+                                      gContext.color);
+    } else {
+        drawList->AddPolyline(pointsl.data(), pointCount, gContext.color,
+                              ImDrawFlags_Closed, gContext.thickness);
+    }
+}
+
+void polyline(const glm::vec2 position,
+              const glm::vec2* points,
+              int pointCount) {
+    std::vector<ImVec2> pointsl(pointCount);
+
+    for (int i = 0; i < pointCount; i++) {
+        pointsl[i] = transformPoint(camMatrix, points[i] + position);
+    }
+    drawList->AddPolyline(pointsl.data(), pointCount, gContext.color,
+                          ImDrawFlags_None, gContext.thickness);
+}
+
+void polyline(const glm::mat4& modelMatrix,
+              const glm::vec2* points,
+              int pointCount) {
+    glm::mat4 mvpMatrix = camMatrix * modelMatrix;
+    std::vector<ImVec2> pointsl(pointCount);
+
+    for (int i = 0; i < pointCount; i++) {
+        pointsl[i] = transformPoint(mvpMatrix, points[i]);
+    }
+    drawList->AddPolyline(pointsl.data(), pointCount, gContext.color,
+                          ImDrawFlags_None, gContext.thickness);
+}
+
+void rect(const glm::vec2& position,
+          float angle,
+          const glm::vec2& halfExtends,
+          bool filled) {
+    glm::mat4 modelMatrix = Math::modelMatrix2D(position, angle);
+    rect(modelMatrix, halfExtends, filled);
+}
+
+void rect(const glm::mat4& modelMatrix,
+          const glm::vec2& halfExtends,
+          bool filled) {
+    glm::mat4 mvpMatrix = camMatrix * modelMatrix;
+    ImVec2 pointsl[4];
+    pointsl[0] =
+        transformPoint(mvpMatrix, glm::vec2(-halfExtends.x, -halfExtends.y));
+    pointsl[1] =
+        transformPoint(mvpMatrix, glm::vec2(+halfExtends.x, -halfExtends.y));
+    pointsl[2] =
+        transformPoint(mvpMatrix, glm::vec2(+halfExtends.x, +halfExtends.y));
+    pointsl[3] =
+        transformPoint(mvpMatrix, glm::vec2(-halfExtends.x, +halfExtends.y));
+    if (filled) {
+        drawList->AddConvexPolyFilled(pointsl, 4, gContext.color);
+    } else {
+        drawList->AddPolyline(pointsl, 4, gContext.color, ImDrawFlags_Closed,
+                              gContext.thickness);
+    }
+}
+
+void grid(const glm::vec2& min,
+          const glm::vec2& max,
+          const glm::vec2& lineDistance) {
+    // Horizontal lines
+    for (int y = min.y; y <= max.y; y+= lineDistance.y) {
+        line(glm::vec2(min.x, y), glm::vec2(max.x, y));
+    }
+    // Vertical lines
+    for (int x = min.x; x <= max.x; x += lineDistance.x) {
+        line(glm::vec2(x, min.y), glm::vec2(x, max.y));
+    }
+}
+
+void text(const glm::vec2& position, const char* text) {
+    ImVec2 positionl = transformPoint(camMatrix, position);
+    drawList->AddText(positionl, gContext.color, text );
 }
 
 void setColor(ImColor color) {
@@ -122,6 +253,32 @@ void reset() {
     gContext.color = 0xffffffff;
     gContext.thickness = 1;
 }
+
+void positionHandle(glm::vec2& position) {
+    glm::mat4 modelMatrix = Math::modelMatrix2D(position, 0);
+    positionHandle(modelMatrix);
+    position.x = modelMatrix[3][0];
+    position.y = modelMatrix[3][1];
+}
+
+void positionHandle(glm::mat4& modelMatrix) {
+    glm::mat4 identity = glm::mat4(1);
+    ImGuizmo::SetDrawlist(drawList);
+    ImGuizmo::SetOrthographic(true);
+    ImGuizmo::SetRect(gContext.x, gContext.y, gContext.width, gContext.height);
+    ImGuizmo::Manipulate(&identity[0][0], &camMatrix[0][0], ImGuizmo::TRANSLATE,
+                         ImGuizmo::WORLD, &modelMatrix[0][0]);
+}
+
+void rotationHandle(glm::mat4& modelMatrix) {
+    glm::mat4 identity = glm::mat4(1);
+    ImGuizmo::SetDrawlist(drawList);
+    ImGuizmo::SetOrthographic(true);
+    ImGuizmo::SetRect(gContext.x, gContext.y, gContext.width, gContext.height);
+    ImGuizmo::Manipulate(&identity[0][0], &camMatrix[0][0], ImGuizmo::ROTATE_Z,
+                         ImGuizmo::WORLD, &modelMatrix[0][0]);
+}
+
 
 glm::vec2 vectorScreenToGame(glm::vec2 vector) {
     return vector / glm::vec2(camMatrix[0][0], camMatrix[1][1]);
@@ -160,5 +317,14 @@ glm::vec2 getMousePosInWindow() {
     mouse.y -= 0.5f;
     mouse /= 0.5f;
     return mouse;
+}
+bool isMouseDown(int mouseButton) {
+    return ImGui::IsMouseDown(mouseButton);
+}
+bool isMouseClicked(int mouseButton) {
+    return ImGui::IsMouseClicked(mouseButton);
+}
+bool isMouseReleased(int mouseButton) {
+    return ImGui::IsMouseReleased(mouseButton);
 }
 } // namespace Input
