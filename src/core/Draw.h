@@ -7,31 +7,69 @@
 struct ImColor;
 
 namespace Draw {
-// Draw a line from the start to the end point.
+// Draws a line from the start to the end point.
 void line(const glm::vec2& start, const glm::vec2& end);
-// Draw a circle.
+// Draws an arrow from the start to the end point.
+void arrow(const glm::vec2& start, const glm::vec2& end, float headThickness = 0.02f);
+// Draws a circle.
 void circle(const glm::vec2& center, float radius, bool filled = false);
-// Draw an axis aligned rectangle.
+// Draws an axis aligned rectangle.
 void aabb(const glm::vec2& min, const glm::vec2& max, bool filled = false);
+// Draws a polygon.
+void polygon(const glm::vec2 position,
+             const glm::vec2* points,
+             int pointCount,
+             bool filled = false);
+void polygon(const glm::mat4& modelMatrix,
+             const glm::vec2* points,
+             int pointCount,
+             bool filled = false);
+// Draws a polyline.
+void polyline(const glm::vec2 position,
+              const glm::vec2* points,
+              int pointCount);
+void polyline(const glm::mat4& modelMatrix,
+              const glm::vec2* points,
+              int pointCount);
+// Draws a rectangle.
+void rect(const glm::vec2& position,
+          float angle,
+          const glm::vec2& halfExtends,
+          bool filled = false);
+void rect(const glm::mat4& modelMatrix,
+          const glm::vec2& halfExtends,
+          bool filled = false);
+// Draws a grid.
+void grid(const glm::vec2& min,
+          const glm::vec2& max,
+          const glm::vec2& lineDistance);
+// Draws some text.
+void text(const glm::vec2& position, const char* text);
 
-// Set the color to draw with.
+// Sets the color to draw with.
 void setColor(ImColor color);
-// Set the thickness to draw with.
+// Sets the thickness to draw with.
 void setThickness(float thickness);
-// Reset color and thickness.
+// Resets color and thickness.
 void reset();
 
-// Begin drawing a frame. Called from Simple2DScene.
+// Draws a handle that the user can use to modify the position.
+void positionHandle(glm::vec2& position);
+void positionHandle(glm::mat4& modelMatrix);
+// Draws a handle that the user can use to modify the rotation.
+void rotationHandle(glm::mat4& modelMatrix);
+
+// Begins drawing a frame. Called from Simple2DScene.
 void begin();
-// Finish drawing a frame. Called from Simple2DScene.
+// Finishs drawing a frame. Called from Simple2DScene.
 void end();
-// Set the camera matrix. Called from Simple2DScene.
+// Sets the camera matrix. Called from Simple2DScene.
 void setCamera(const glm::mat4& vpMatrix);
-// Setup the viewport in the current ImGui window. Called from Simple2DScene.
+// Sets the viewport up in the current ImGui window. Called from Simple2DScene.
 void setupImGuiViewport();
-// Set the viewport. Called from Simple2DScene.
+// Sets the viewport. Called from Simple2DScene.
 void setViewport(float x, float y, float width, float height);
-// Convert vector from screen space to world space.
+// Converts vector from screen space to world space.
 glm::vec2 vectorScreenToGame(glm::vec2 vector);
 } // namespace Draw
 
@@ -40,4 +78,10 @@ namespace Input {
 glm::vec2 getMousePos();
 // Returns the mouse position in imgui window coordinates.
 glm::vec2 getMousePosInWindow();
+// Returns true if the mouse button is currently pressed.
+bool isMouseDown(int mouseButton);
+// Returns true if the mouse button was pressed this frame.
+bool isMouseClicked(int mouseButton);
+// Returns true if the mouse button was released this frame.
+bool isMouseReleased(int mouseButton);
 } // namespace Input
