@@ -17,4 +17,9 @@ public:
 private:
     std::vector<Circle> circles;
     glm::vec2 gravity = glm::vec2(0, -9.81f);
+
+    int numberOfCircles = 10;
+    float radius = 2;
+    float velocityMultiplier = 1;
+    float circleRadius = 1;
 };

@@ -8,7 +8,9 @@ Circle::Circle(const glm::vec2& position,
                float radius,
                float mass)
     : position(position),
-velocity(velocity), acceleration(acceleration), radius(radius) {
+      velocity(velocity),
+      acceleration(acceleration),
+      radius(radius) {
     if (mass == 0) {
         inverseMass = 0;
     } else {
