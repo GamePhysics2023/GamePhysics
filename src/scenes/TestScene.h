@@ -2,7 +2,6 @@
 
 #include <glm/glm.hpp>
 #include "core/Simple2DScene.h"
-#include "objects/Test.h"
 
 class TestScene : public Simple2DScene {
 public:
