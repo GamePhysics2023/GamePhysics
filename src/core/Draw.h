@@ -54,10 +54,10 @@ void setThickness(float thickness);
 void reset();
 
 // Draws a handle that the user can use to modify the position.
-void positionHandle(glm::vec2& position);
-void positionHandle(glm::mat4& modelMatrix);
+bool positionHandle(glm::vec2& position);
+bool positionHandle(glm::mat4& modelMatrix);
 // Draws a handle that the user can use to modify the rotation.
-void rotationHandle(glm::mat4& modelMatrix);
+bool rotationHandle(glm::mat4& modelMatrix);
 
 // Begins drawing a frame. Called from Simple2DScene.
 void begin();

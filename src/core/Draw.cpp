@@ -254,28 +254,29 @@ void reset() {
     gContext.thickness = 1;
 }
 
-void positionHandle(glm::vec2& position) {
+bool positionHandle(glm::vec2& position) {
     glm::mat4 modelMatrix = Math::modelMatrix2D(position, 0);
-    positionHandle(modelMatrix);
+    bool manipulated = positionHandle(modelMatrix);
     position.x = modelMatrix[3][0];
     position.y = modelMatrix[3][1];
+    return manipulated;
 }
 
-void positionHandle(glm::mat4& modelMatrix) {
+bool positionHandle(glm::mat4& modelMatrix) {
     glm::mat4 identity = glm::mat4(1);
     ImGuizmo::SetDrawlist(drawList);
     ImGuizmo::SetOrthographic(true);
     ImGuizmo::SetRect(gContext.x, gContext.y, gContext.width, gContext.height);
-    ImGuizmo::Manipulate(&identity[0][0], &camMatrix[0][0], ImGuizmo::TRANSLATE,
+    return ImGuizmo::Manipulate(&identity[0][0], &camMatrix[0][0], ImGuizmo::TRANSLATE,
                          ImGuizmo::WORLD, &modelMatrix[0][0]);
 }
 
-void rotationHandle(glm::mat4& modelMatrix) {
+bool rotationHandle(glm::mat4& modelMatrix) {
     glm::mat4 identity = glm::mat4(1);
     ImGuizmo::SetDrawlist(drawList);
     ImGuizmo::SetOrthographic(true);
     ImGuizmo::SetRect(gContext.x, gContext.y, gContext.width, gContext.height);
-    ImGuizmo::Manipulate(&identity[0][0], &camMatrix[0][0], ImGuizmo::ROTATE_Z,
+    return ImGuizmo::Manipulate(&identity[0][0], &camMatrix[0][0], ImGuizmo::ROTATE_Z,
                          ImGuizmo::WORLD, &modelMatrix[0][0]);
 }
 
