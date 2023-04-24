@@ -7,16 +7,17 @@
 #else
 #include <SDL_opengl.h>
 #endif
+#include <fstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <memory>
 #include "ImGuizmo.h"
+#include "Preferences.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_sdl2.h"
 #include "core/Draw.h"
 #include "imgui.h"
-#include "Preferences.h"
 
 Application::Application(const std::vector<Scene*>& scenes)
     : scenes(scenes), clearColor(ImVec4(0.45f, 0.55f, 0.60f, 1.00f)) {
@@ -189,6 +190,7 @@ void Application::mainLoop(const ImGuiIO& io) {
         statsWindow(io);
         controlWindow();
         settingsWindow();
+        newSceneModal();
 
         // Show the current scene.
         if (!isPaused || isStepping) {
@@ -268,6 +270,9 @@ void Application::menuBar() {
                 Preferences::setBool("settings_window", isSettingsWindowVisible);
                 Preferences::save();
             }
+            if (ImGui::MenuItem("Create new Scene")) {
+                openNewSceneModal = true;
+            }
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -323,4 +328,94 @@ void Application::controlWindow() {
     }
     ImGui::EndDisabled();
     ImGui::End();
+}
+
+void Application::newSceneModal() {
+    if (openNewSceneModal) {
+        // Need to do this here, so that the menu is not in the id stack.
+        // see https://github.com/ocornut/imgui/issues/331
+        ImGui::OpenPopup("New Scene");
+        openNewSceneModal = false;
+    }
+    if (ImGui::BeginPopupModal("New Scene", NULL,
+                               ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Create new scene .cpp/.h files in the src/scenes folder.");
+
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+        static char errorText[256] = "";
+        if (strlen(errorText)) {
+            ImGui::TextColored(ImVec4(1,0.3f,0.3f,1), errorText);
+        }
+
+
+        static char sceneFilename[256] = "";
+        ImGui::InputText("Class Name", sceneFilename, 256);
+        static char displayText[256] = "";
+        ImGui::InputText("Display Text", displayText, 256);
+
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+        if (ImGui::Button("OK", ImVec2(200, 0))) {
+            if (strlen(sceneFilename) == 0) {
+                strcpy(errorText, "Class Name cannot be empty.");
+            } else if (strlen(displayText) == 0) {
+                strcpy(errorText, "Display Text cannot be empty.");
+            } else {
+                if (!newScene(sceneFilename, displayText)) {
+                    strcpy(errorText, "File already exists.");
+                } else {
+                    sceneFilename[0] = 0;
+                    displayText[0] = 0;
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+        }
+        ImGui::SetItemDefaultFocus();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+bool Application::newScene(const char* filename, const char* displayText) {
+    std::string headerPath = "../src/scenes/";
+    headerPath.append(filename).append(".h");
+    std::string sourcePath = "../src/scenes/";
+    sourcePath.append(filename).append(".cpp");
+
+    std::ifstream headerFileRead(headerPath);
+    if (headerFileRead.good()) {
+        return false;
+    }
+
+    std::ofstream headerFile(headerPath);
+    headerFile << "#pragma once\n\n"
+               << "#include <vector>\n"
+               << "#include \"core/Simple2DScene.h\"\n\n"
+               << "class " << filename << " : public Simple2DScene {\n"
+               << "public:\n"
+               << "    virtual void onEnable() override;\n"
+               << "    virtual void onDisable() override;\n"
+               << "    virtual void update(float deltaTime) override;\n"
+               << "    virtual void draw() override;\n"
+               << "    virtual void drawGUI() override;\n\n"
+               << "    virtual const char* getName() override { return \"" << displayText << "\"; " << "};\n"
+               << "};\n";
+    headerFile.close();
+
+    std::ofstream sourceFile(sourcePath);
+    sourceFile << "#include \"" << filename << ".h\"\n\n"
+               << "#include \"imgui.h\"\n\n"
+               << "void " << filename << "::onEnable() {}\n\n"
+               << "void " << filename << "::onDisable() {}\n\n"
+               << "void " << filename << "::update(float deltaTime) {}\n\n"
+               << "void " << filename << "::draw() {}\n\n"
+               << "void " << filename << "::drawGUI() {\n"
+               << "    ImGui::Begin(\"Inspector\");\n"
+               << "    ImGui::End();\n"
+               << "}\n";
+    sourceFile.close();
+    return true;
 }

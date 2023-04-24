@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <map>
-#include <iostream>
 
 std::map<std::string, std::string> preferences{};
 const char* FILE_NAME = "preferences.txt";
@@ -13,7 +12,6 @@ void Preferences::load() {
     std::string value;
     while (file >> key >> value) {
         preferences[key] = value;
-        std::cout << key << "," << value << std::endl;
     }
 }
 

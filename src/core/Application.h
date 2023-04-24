@@ -30,6 +30,9 @@ private:
     void settingsWindow();
     // Render the control window.
     void controlWindow();
+    // Create modal to enter information about the new scene.
+    void newSceneModal();
+    bool newScene(const char* filename, const char* displayText);
 
     // All available scenes.
     std::vector<Scene*> scenes;
@@ -55,4 +58,7 @@ private:
     bool isVsyncEnabled = true;
     bool isFramerateCapped = false;
     float framerateCap = 60;
+
+    // New scene dialog.
+    bool openNewSceneModal = false;
 };
