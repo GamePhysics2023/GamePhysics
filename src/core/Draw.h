@@ -57,7 +57,11 @@ void reset();
 bool positionHandle(glm::vec2& position);
 bool positionHandle(glm::mat4& modelMatrix);
 // Draws a handle that the user can use to modify the rotation.
+bool rotationHandle(const glm::vec2& position, float& angle);
 bool rotationHandle(glm::mat4& modelMatrix);
+
+// Returns true if the point is inside the visible rect of the viewport.
+bool isPointVisible(const glm::vec2& point);
 
 // Begins drawing a frame. Called from Simple2DScene.
 void begin();

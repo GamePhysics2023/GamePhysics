@@ -271,6 +271,13 @@ bool positionHandle(glm::mat4& modelMatrix) {
                          ImGuizmo::WORLD, &modelMatrix[0][0]);
 }
 
+bool rotationHandle(const glm::vec2& position, float& angle) {
+    glm::mat4 modelMatrix = Math::modelMatrix2D(position, angle);
+    bool manipulated = rotationHandle(modelMatrix);
+    angle = atan2f(modelMatrix[0][1], modelMatrix[0][0]);
+    return manipulated;
+}
+
 bool rotationHandle(glm::mat4& modelMatrix) {
     glm::mat4 identity = glm::mat4(1);
     ImGuizmo::SetDrawlist(drawList);
@@ -278,6 +285,12 @@ bool rotationHandle(glm::mat4& modelMatrix) {
     ImGuizmo::SetRect(gContext.x, gContext.y, gContext.width, gContext.height);
     return ImGuizmo::Manipulate(&identity[0][0], &camMatrix[0][0], ImGuizmo::ROTATE_Z,
                          ImGuizmo::WORLD, &modelMatrix[0][0]);
+}
+
+bool isPointVisible(const glm::vec2& point) {
+    auto screen = transformPoint(camMatrix, point);
+    return screen.x >= gContext.x && screen.x <= gContext.x + gContext.width &&
+           screen.y >= gContext.y && screen.y <= gContext.y + gContext.height;
 }
 
 
