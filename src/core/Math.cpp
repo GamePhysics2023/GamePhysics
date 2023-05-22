@@ -29,7 +29,7 @@ std::vector<glm::vec2> Math::transformPolygon(
 }
 
 std::vector<glm::vec2> Math::generateRegularPolygon(int pointCount,
-                                              float radius) {
+                                                    float radius) {
     std::vector<glm::vec2> points;
     float pi2 = M_PI * 2;
     for (int i = 0; i < pointCount; i++) {
@@ -38,4 +38,21 @@ std::vector<glm::vec2> Math::generateRegularPolygon(int pointCount,
             glm::vec2(cosf(t * pi2) * radius, sinf(t * pi2) * radius));
     }
     return points;
+}
+
+float Math::crossProduct2D(const glm::vec2& a, const glm::vec2& b) {
+    return a.x * b.y - a.y * b.x;
+}
+
+std::vector<glm::vec2> Math::getRectangleWorldPoints(
+    const glm::vec2& position,
+    float angle,
+    const glm::vec2& halfExtends) {
+    std::vector<glm::vec2> points;
+    points.push_back(position + glm::vec2(-halfExtends.x, halfExtends.y));
+    points.push_back(position + glm::vec2(-halfExtends.x, -halfExtends.y));
+    points.push_back(position + glm::vec2(halfExtends.x, -halfExtends.y));
+    points.push_back(position + glm::vec2(halfExtends.x, halfExtends.y));
+
+    return transformPolygon(points, position, angle);
 }
